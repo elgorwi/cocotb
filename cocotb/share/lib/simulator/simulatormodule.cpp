@@ -41,6 +41,9 @@ static int sim_ending = 0;
 
 #include <cocotb_utils.h>     // COCOTB_UNUSED
 #include <type_traits>
+#include <array>
+#include <vector>
+#include <string>
 #include <Python.h>
 #include "gpi_logging.h"
 #include "gpi.h"
@@ -600,6 +603,26 @@ static PyObject *get_signal_val_binstr(gpi_hdl_Object<gpi_sim_hdl> *self, PyObje
     return PyUnicode_FromString(result);
 }
 
+static PyObject *get_signal_val_bytes(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject *args)
+{
+    COCOTB_UNUSED(args);
+    std::string m_hexstr(gpi_get_signal_value_hexstr(self->hdl));
+    std::string m_bytestr{};
+    std::vector<char> m_bytes{};
+    size_t m_len = m_hexstr.length();
+
+    if (m_len % 2 == 1) {
+        m_hexstr = '0' + m_hexstr;
+    }
+
+    for (size_t i = 0; i < m_len; i += 2) {
+        m_bytestr = m_hexstr.substr(i, 2);
+        m_bytes.push_back(static_cast<char>(strtol(m_bytestr.c_str(), NULL, 16)));
+    }
+
+    return PyBytes_FromStringAndSize(m_bytes.data(), m_bytes.size());
+}
+
 static PyObject *get_signal_val_str(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject *args)
 {
     COCOTB_UNUSED(args);
@@ -613,7 +636,6 @@ static PyObject *get_signal_val_real(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject
     double result = gpi_get_signal_value_real(self->hdl);
     return PyFloat_FromDouble(result);
 }
-
 
 static PyObject *get_signal_val_long(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject *args)
 {
@@ -645,6 +667,32 @@ static PyObject *set_signal_val_str(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject 
     }
 
     gpi_set_signal_value_str(self->hdl, str, action);
+    Py_RETURN_NONE;
+}
+
+static PyObject *set_signal_val_bytes(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject *args)
+{
+    gpi_set_action_t action;
+    const char *bytes;
+    Py_ssize_t len;
+
+    if (!PyArg_ParseTuple(args, "iy#:set_signal_val_bytes", &action, &bytes, &len)) {
+        return NULL;
+    }
+
+    const std::string HEXSTR_LUT = {"0123456789abcdef"};
+    uint8_t m_idx{};
+    std::string m_hexstr{""};
+
+    for (auto i = 0; i < len; ++i)
+    {
+        m_idx = (bytes[i] >> 4) & UINT8_C(0x0F);
+        m_hexstr += HEXSTR_LUT[m_idx];
+        m_idx = bytes[i] & UINT8_C(0x0F);
+        m_hexstr += HEXSTR_LUT[m_idx];
+    }
+
+    gpi_set_signal_value_hexstr(self->hdl, m_hexstr.c_str(), action);
     Py_RETURN_NONE;
 }
 
@@ -1153,6 +1201,14 @@ static PyMethodDef gpi_sim_hdl_methods[] = {
             "Get the value of a logic vector signal as a string of (``0``, ``1``, ``X``, etc.), one element per character."
         )
     },
+    {"get_signal_val_bytes",
+        (PyCFunction)get_signal_val_bytes, METH_NOARGS, PyDoc_STR(
+            "get_signal_val_bytes($self)\n"
+            "--\n\n"
+            "get_signal_val_bytes() -> str\n"
+            "Get the value of a logic vector signal as bytes."
+        )
+    },
     {"get_signal_val_real",
         (PyCFunction)get_signal_val_real, METH_NOARGS, PyDoc_STR(
             "get_signal_val_real($self)\n"
@@ -1175,6 +1231,14 @@ static PyMethodDef gpi_sim_hdl_methods[] = {
             "--\n\n"
             "set_signal_val_str(action: int, value: bytes) -> None\n"
             "Set the value of a signal using a user-encoded string."
+        )
+    },
+    {"set_signal_val_bytes",
+        (PyCFunction)set_signal_val_bytes, METH_VARARGS, PyDoc_STR(
+            "set_signal_val_bytes($self, action, value, /)\n"
+            "--\n\n"
+            "set_signal_val_bytes(action: int, value: bytes) -> None\n"
+            "Set the value of a signal using a bytes like object."
         )
     },
     {"set_signal_val_binstr",

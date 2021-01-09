@@ -296,7 +296,7 @@ def _get_python_lib():
 # TODO [gh-1372]: make this work for MSVC which has a different flag syntax
 _base_warns = ["-Wall", "-Wextra", "-Wcast-qual", "-Wwrite-strings", "-Wconversion"]
 _ccx_warns = _base_warns + ["-Wnon-virtual-dtor", "-Woverloaded-virtual"]
-_extra_cxx_compile_args = ["-std=c++11", "-fvisibility=hidden", "-fvisibility-inlines-hidden"] + _ccx_warns
+_extra_cxx_compile_args = ["-std=c++11", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-DPY_SSIZE_T_CLEAN"] + _ccx_warns
 if os.name != "nt":
     _extra_cxx_compile_args += ["-flto"]
 

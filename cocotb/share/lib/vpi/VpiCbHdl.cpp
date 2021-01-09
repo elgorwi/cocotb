@@ -298,6 +298,16 @@ const char* VpiSignalObjHdl::get_signal_value_binstr()
     return value_s.value.str;
 }
 
+const char* VpiSignalObjHdl::get_signal_value_hexstr()
+{
+    s_vpi_value value_s = {vpiHexStrVal, {NULL}};
+
+    vpi_get_value(GpiObjHdl::get_handle<vpiHandle>(), &value_s);
+    check_vpi_error();
+
+    return value_s.value.str;
+}
+
 const char* VpiSignalObjHdl::get_signal_value_str()
 {
     s_vpi_value value_s = {vpiStringVal, {NULL}};
@@ -358,6 +368,19 @@ int VpiSignalObjHdl::set_signal_value_binstr(std::string &value, gpi_set_action_
 
     value_s.value.str = &writable[0];
     value_s.format = vpiBinStrVal;
+
+    return set_signal_value(value_s, action);
+}
+
+int VpiSignalObjHdl::set_signal_value_hexstr(std::string &value, gpi_set_action_t action)
+{
+    s_vpi_value value_s;
+
+    std::vector<char> writable(value.begin(), value.end());
+    writable.push_back('\0');
+
+    value_s.value.str = &writable[0];
+    value_s.format = vpiHexStrVal;
 
     return set_signal_value(value_s, action);
 }

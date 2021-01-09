@@ -461,6 +461,12 @@ const char *gpi_get_signal_value_binstr(gpi_sim_hdl sig_hdl)
     return obj_hdl->get_signal_value_binstr();
 }
 
+const char *gpi_get_signal_value_hexstr(gpi_sim_hdl sig_hdl)
+{
+    GpiSignalObjHdl *obj_hdl = static_cast<GpiSignalObjHdl*>(sig_hdl);
+    return obj_hdl->get_signal_value_hexstr();
+}
+
 const char *gpi_get_signal_value_str(gpi_sim_hdl sig_hdl)
 {
     GpiSignalObjHdl *obj_hdl = static_cast<GpiSignalObjHdl*>(sig_hdl);
@@ -521,6 +527,13 @@ void gpi_set_signal_value_binstr(gpi_sim_hdl sig_hdl, const char *binstr, gpi_se
     std::string value = binstr;
     GpiSignalObjHdl *obj_hdl = static_cast<GpiSignalObjHdl*>(sig_hdl);
     obj_hdl->set_signal_value_binstr(value, action);
+}
+
+void gpi_set_signal_value_hexstr(gpi_sim_hdl sig_hdl, const char *hexstr, gpi_set_action_t action)
+{
+    std::string value = hexstr;
+    GpiSignalObjHdl *obj_hdl = static_cast<GpiSignalObjHdl*>(sig_hdl);
+    obj_hdl->set_signal_value_hexstr(value, action);
 }
 
 void gpi_set_signal_value_str(gpi_sim_hdl sig_hdl, const char *str, gpi_set_action_t action)

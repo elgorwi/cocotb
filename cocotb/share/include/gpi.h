@@ -206,6 +206,7 @@ GPI_EXPORT int gpi_get_range_right(gpi_sim_hdl gpi_sim_hdl);
 // This is all slightly verbose but it saves having to enumerate various value types
 // We only care about a limited subset of values.
 GPI_EXPORT const char *gpi_get_signal_value_binstr(gpi_sim_hdl gpi_hdl);
+GPI_EXPORT const char *gpi_get_signal_value_hexstr(gpi_sim_hdl gpi_hdl);
 GPI_EXPORT const char *gpi_get_signal_value_str(gpi_sim_hdl gpi_hdl);
 GPI_EXPORT double gpi_get_signal_value_real(gpi_sim_hdl gpi_hdl);
 GPI_EXPORT long gpi_get_signal_value_long(gpi_sim_hdl gpi_hdl);
@@ -229,6 +230,7 @@ GPI_EXPORT int gpi_is_indexable(gpi_sim_hdl gpi_hdl);
 GPI_EXPORT void gpi_set_signal_value_real(gpi_sim_hdl gpi_hdl, double value, gpi_set_action_t action);
 GPI_EXPORT void gpi_set_signal_value_long(gpi_sim_hdl gpi_hdl, long value, gpi_set_action_t action);
 GPI_EXPORT void gpi_set_signal_value_binstr(gpi_sim_hdl gpi_hdl, const char *str, gpi_set_action_t action); // String of binary char(s) [1, 0, x, z]
+GPI_EXPORT void gpi_set_signal_value_hexstr(gpi_sim_hdl gpi_hdl, const char *str, gpi_set_action_t action); // String of hex char(s)
 GPI_EXPORT void gpi_set_signal_value_str(gpi_sim_hdl gpi_hdl, const char *str, gpi_set_action_t action);    // String of ASCII char(s)
 
 typedef enum gpi_edge {

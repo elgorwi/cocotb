@@ -709,6 +709,11 @@ class ModifiableObject(NonConstantObject):
         if isinstance(value, int) and value < 0x7fffffff and len(self) <= 32:
             call_sim(self, self._handle.set_signal_val_long, set_action, value)
             return
+
+        if isinstance(value, bytes):
+            call_sim(self, self._handle.set_signal_val_bytes, set_action, value)
+            return
+
         if isinstance(value, ctypes.Structure):
             warnings.warn(
                 "`ctypes.Structure` values are no longer accepted for value assignment. "
@@ -747,6 +752,9 @@ class ModifiableObject(NonConstantObject):
         binstr = self._handle.get_signal_val_binstr()
         result = BinaryValue(binstr, len(binstr))
         return result
+
+    def __bytes__(self):
+        return self._handle.get_signal_val_bytes()
 
     def __int__(self):
         return int(self.value)

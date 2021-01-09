@@ -148,6 +148,7 @@ public:
     virtual ~GpiSignalObjHdl() = default;
     // Provide public access to the implementation (composition vs inheritance)
     virtual const char* get_signal_value_binstr() = 0;
+    virtual const char* get_signal_value_hexstr() = 0;
     virtual const char* get_signal_value_str() = 0;
     virtual double get_signal_value_real() = 0;
     virtual long get_signal_value_long() = 0;
@@ -158,6 +159,7 @@ public:
     virtual int set_signal_value(const double value, gpi_set_action_t action) = 0;
     virtual int set_signal_value_str(std::string &value, gpi_set_action_t action) = 0;
     virtual int set_signal_value_binstr(std::string &value, gpi_set_action_t action) = 0;
+    virtual int set_signal_value_hexstr(std::string &value, gpi_set_action_t action) = 0;
     //virtual GpiCbHdl monitor_value(bool rising_edge) = 0; this was for the triggers
     // but the explicit ones are probably better
 

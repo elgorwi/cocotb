@@ -564,6 +564,51 @@ int VhpiLogicSignalObjHdl::set_signal_value_binstr(std::string &value, gpi_set_a
     return 0;
 }
 
+int VhpiLogicSignalObjHdl::set_signal_value_hexstr(std::string &value, gpi_set_action_t action)
+{
+    switch (m_value.format) {
+        case vhpiEnumVal:
+        case vhpiLogicVal: {
+            m_value.value.enumv = chr2vhpi(value.c_str()[0]);
+            break;
+        }
+
+        case vhpiEnumVecVal:
+        case vhpiLogicVecVal: {
+
+            if ((int)value.length() != m_num_elems) {
+                LOG_ERROR("VHPI: Unable to set logic vector due to the string having incorrect length.  Length of %d needs to be %d", value.length(), m_num_elems);
+                return -1;
+            }
+
+            m_value.numElems = m_num_elems;
+
+            std::string::iterator iter;
+
+            int i = 0;
+            for (iter = value.begin();
+                 (iter != value.end()) && (i < m_num_elems);
+                 iter++, i++) {
+                m_value.value.enumvs[i] = chr2vhpi(*iter);
+            }
+
+            break;
+        }
+
+        default: {
+           LOG_ERROR("VHPI: Unable to set a std_logic signal with a raw value");
+           return -1;
+        }
+    }
+
+    if (vhpi_put_value(GpiObjHdl::get_handle<vhpiHandleT>(), &m_value, map_put_value_mode(action))) {
+        check_vhpi_error();
+        return -1;
+    }
+
+    return 0;
+}
+
 // Value related functions
 int VhpiSignalObjHdl::set_signal_value(long value, gpi_set_action_t action)
 {
@@ -697,6 +742,52 @@ int VhpiSignalObjHdl::set_signal_value_binstr(std::string &value, gpi_set_action
     return 0;
 }
 
+int VhpiSignalObjHdl::set_signal_value_hexstr(std::string &value, gpi_set_action_t action)
+{
+    switch (m_value.format) {
+        case vhpiEnumVal:
+        case vhpiLogicVal: {
+            m_value.value.enumv = chr2vhpi(value.c_str()[0]);
+            break;
+        }
+
+        case vhpiEnumVecVal:
+        case vhpiLogicVecVal: {
+
+            if ((int)value.length() != m_num_elems) {
+                LOG_ERROR("VHPI: Unable to set logic vector due to the string having incorrect length.  Length of %d needs to be %d", value.length(), m_num_elems);
+                return -1;
+            }
+
+            m_value.numElems = m_num_elems;
+
+            std::string::iterator iter;
+
+            int i = 0;
+            for (iter = value.begin();
+                 (iter != value.end()) && (i < m_num_elems);
+                 iter++, i++) {
+                m_value.value.enumvs[i] = chr2vhpi(*iter);
+            }
+
+            break;
+        }
+
+        default: {
+            LOG_ERROR("VHPI: Unable to handle this format type: %s",
+                      ((VhpiImpl*)GpiObjHdl::m_impl)->format_to_string(m_value.format));
+            return -1;
+        }
+    }
+
+    if (vhpi_put_value(GpiObjHdl::get_handle<vhpiHandleT>(), &m_value, map_put_value_mode(action))) {
+        check_vhpi_error();
+        return -1;
+    }
+
+    return 0;
+}
+
 int VhpiSignalObjHdl::set_signal_value_str(std::string &value, gpi_set_action_t action)
 {
     switch (m_value.format) {
@@ -729,6 +820,29 @@ const char* VhpiSignalObjHdl::get_signal_value_binstr()
     switch (m_value.format) {
         case vhpiRealVal:
             LOG_INFO("VHPI: get_signal_value_binstr not supported for %s",
+                      ((VhpiImpl*)GpiObjHdl::m_impl)->format_to_string(m_value.format));
+            return "";
+        default: {
+            /* Some simulators do not support BinaryValues so we fake up here for them */
+            int ret = vhpi_get_value(GpiObjHdl::get_handle<vhpiHandleT>(), &m_binvalue);
+            if (ret) {
+                check_vhpi_error();
+                LOG_ERROR("VHPI: Size of m_binvalue.value.str was not large enough: req=%d have=%d for type %s",
+                          ret,
+                          m_binvalue.bufSize,
+                          ((VhpiImpl*)GpiObjHdl::m_impl)->format_to_string(m_value.format));
+            }
+
+            return m_binvalue.value.str;
+        }
+    }
+}
+
+const char* VhpiSignalObjHdl::get_signal_value_hexstr()
+{
+    switch (m_value.format) {
+        case vhpiRealVal:
+            LOG_INFO("VHPI: get_signal_value_hexstr not supported for %s",
                       ((VhpiImpl*)GpiObjHdl::m_impl)->format_to_string(m_value.format));
             return "";
         default: {

@@ -122,6 +122,12 @@ const char* FliValueObjHdl::get_signal_value_binstr()
     return NULL;
 }
 
+const char* FliValueObjHdl::get_signal_value_hexstr()
+{
+    LOG_ERROR("Getting signal/variable value as hexstr not supported for %s of type %d", m_fullname.c_str(), m_type);
+    return NULL;
+}
+
 const char* FliValueObjHdl::get_signal_value_str()
 {
     LOG_ERROR("Getting signal/variable value as str not supported for %s of type %d", m_fullname.c_str(), m_type);
@@ -149,6 +155,14 @@ int FliValueObjHdl::set_signal_value(long value, gpi_set_action_t action)
 }
 
 int FliValueObjHdl::set_signal_value_binstr(std::string &value, gpi_set_action_t action)
+{
+    COCOTB_UNUSED(value);
+    COCOTB_UNUSED(action);
+    LOG_ERROR("Setting signal/variable value via string not supported for %s of type %d", m_fullname.c_str(), m_type);
+    return -1;
+}
+
+int FliValueObjHdl::set_signal_value_hexstr(std::string &value, gpi_set_action_t action)
 {
     COCOTB_UNUSED(value);
     COCOTB_UNUSED(action);
@@ -315,6 +329,38 @@ const char* FliLogicObjHdl::get_signal_value_binstr()
     return m_val_buff;
 }
 
+const char* FliLogicObjHdl::get_signal_value_hexstr()
+{
+    switch (m_fli_type) {
+        case MTI_TYPE_ENUM:
+            if (m_is_var) {
+                m_val_buff[0] = m_value_enum[mti_GetVarValue(get_handle<mtiVariableIdT>())][1];
+            } else {
+                m_val_buff[0] = m_value_enum[mti_GetSignalValue(get_handle<mtiSignalIdT>())][1];
+            }
+            break;
+        case MTI_TYPE_ARRAY: {
+                if (m_is_var) {
+                    mti_GetArrayVarValue(get_handle<mtiVariableIdT>(), m_mti_buff);
+                } else {
+                    mti_GetArraySignalValue(get_handle<mtiSignalIdT>(), m_mti_buff);
+                }
+
+                for (int i = 0; i < m_num_elems; i++ ) {
+                    m_val_buff[i] = m_value_enum[(int)m_mti_buff[i]][1];
+                }
+            }
+            break;
+        default:
+            LOG_ERROR("Object type is not 'logic' for %s (%d)", m_name.c_str(), m_fli_type);
+            return NULL;
+    }
+
+    LOG_DEBUG("Retrieved \"%s\" for value object %s", m_val_buff, m_name.c_str());
+
+    return m_val_buff;
+}
+
 int FliLogicObjHdl::set_signal_value(const long value, const gpi_set_action_t action)
 {
     if (action != GPI_DEPOSIT) {
@@ -391,6 +437,49 @@ int FliLogicObjHdl::set_signal_value_binstr(std::string &value, const gpi_set_ac
     return 0;
 }
 
+int FliLogicObjHdl::set_signal_value_hexstr(std::string &value, const gpi_set_action_t action)
+{
+    if (action != GPI_DEPOSIT) {
+        LOG_ERROR("Force or release action not supported for FLI.");
+        return -1;
+    }
+
+    if (m_fli_type == MTI_TYPE_ENUM) {
+        mtiInt32T enumVal = m_enum_map[value.c_str()[0]];
+
+        if (m_is_var) {
+            mti_SetVarValue(get_handle<mtiVariableIdT>(), enumVal);
+        } else {
+            mti_SetSignalValue(get_handle<mtiSignalIdT>(), enumVal);
+        }
+    } else {
+
+        if ((int)value.length() != m_num_elems) {
+            LOG_ERROR("FLI: Unable to set logic vector due to the string having incorrect length.  Length of %d needs to be %d", value.length(), m_num_elems);
+            return -1;
+        }
+
+        LOG_DEBUG("set_signal_value(string)::%s", value.c_str());
+
+        mtiInt32T enumVal;
+        std::string::iterator valIter;
+        int i = 0;
+
+        for (valIter = value.begin(); (valIter != value.end()) && (i < m_num_elems); valIter++, i++) {
+            enumVal = m_enum_map[*valIter];
+            m_mti_buff[i] = (char)enumVal;
+        }
+
+        if (m_is_var) {
+            mti_SetVarValue(get_handle<mtiVariableIdT>(), (mtiLongT)m_mti_buff);
+        } else {
+            mti_SetSignalValue(get_handle<mtiSignalIdT>(), (mtiLongT)m_mti_buff);
+        }
+    }
+
+    return 0;
+}
+
 int FliIntObjHdl::initialise(std::string &name, std::string &fq_name)
 {
     m_num_elems   = 1;
@@ -418,6 +507,25 @@ const char* FliIntObjHdl::get_signal_value_binstr()
 
     return m_val_buff;
 }
+
+const char* FliIntObjHdl::get_signal_value_hexstr()
+{
+    mtiInt32T val;
+
+    if (m_is_var) {
+        val = mti_GetVarValue(get_handle<mtiVariableIdT>());
+    } else {
+        val = mti_GetSignalValue(get_handle<mtiSignalIdT>());
+    }
+
+    unsigned long tmp = static_cast<unsigned long>(val);  // only way to keep next line from warning
+    std::bitset<32> value {tmp};
+    std::string bin_str = value.to_string<char,std::string::traits_type, std::string::allocator_type>();
+    snprintf(m_val_buff, 33, "%s", bin_str.c_str());
+
+    return m_val_buff;
+}
+
 
 long FliIntObjHdl::get_signal_value_long()
 {

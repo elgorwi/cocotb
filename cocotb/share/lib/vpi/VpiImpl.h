@@ -175,6 +175,7 @@ public:
                                                              m_either_cb(impl, this, GPI_FALLING | GPI_RISING) { }
 
     const char* get_signal_value_binstr() override;
+    const char* get_signal_value_hexstr() override;
     const char* get_signal_value_str() override;
     double get_signal_value_real() override;
     long get_signal_value_long() override;
@@ -182,6 +183,7 @@ public:
     int set_signal_value(const long value, gpi_set_action_t action) override;
     int set_signal_value(const double value, gpi_set_action_t action) override;
     int set_signal_value_binstr(std::string &value, gpi_set_action_t action) override;
+    int set_signal_value_hexstr(std::string &value, gpi_set_action_t action) override;
     int set_signal_value_str(std::string &value, gpi_set_action_t action) override;
 
     /* Value change callback accessor */
